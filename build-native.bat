@@ -19,7 +19,8 @@ if exist "enet\include\enet.h" (
 
 echo Building enet_jni.dll...
 gcc -shared -fPIC -I"%JAVA_HOME%\include" -I"%JAVA_HOME%\include\win32" %ENET_INCLUDE% ^
-    -o enet_jni.dll enet_jni.c -lws2_32 -lwinmm
+    -o enet_jni.dll enet_jni.c ^
+    -lws2_32 -lwinmm
 
 if %ERRORLEVEL% EQU 0 (
     echo Build successful! enet_jni.dll created in native folder

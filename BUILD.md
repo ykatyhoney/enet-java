@@ -8,7 +8,7 @@
    - Windows: MinGW-w64 or Visual Studio
    - Linux: GCC
    - macOS: Clang (Xcode Command Line Tools)
-4. **ENet Library** - Download from https://github.com/lsalzman/enet
+4. **ENet Library** - This project uses zpl-c/enet (https://github.com/zpl-c/enet), a maintained fork of the original ENet library
 
 ## Step 1: Build Native Library (JNI)
 
@@ -44,7 +44,7 @@ gcc -shared -fPIC -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/darwin" \
     -o libenet_jni.dylib enet_jni.c -lenet
 ```
 
-**Note:** Make sure the ENet library is installed and linked properly.
+**Note:** This project uses zpl-c/enet which is included as a single-header library. The build script automatically detects and uses the local copy in the `native/enet/` directory.
 
 ## Step 2: Build Java Code
 

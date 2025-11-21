@@ -4,7 +4,8 @@ public enum ENetEventType {
     NONE(0),
     CONNECT(1),
     DISCONNECT(2),
-    RECEIVE(3);
+    RECEIVE(3),
+    DISCONNECT_TIMEOUT(4);
 
     private final int value;
 
