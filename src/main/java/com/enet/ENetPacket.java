@@ -24,7 +24,15 @@ public class ENetPacket {
     }
 
     public String getDataAsString() {
-        return new String(data);
+        // Handle null-terminated strings (C-style)
+        int length = data.length;
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] == 0) {
+                length = i;
+                break;
+            }
+        }
+        return new String(data, 0, length, java.nio.charset.StandardCharsets.UTF_8);
     }
 }
 

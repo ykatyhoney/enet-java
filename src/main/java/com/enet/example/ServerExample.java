@@ -4,6 +4,7 @@ import com.enet.ENetConnection;
 import com.enet.ENetEvent;
 import com.enet.ENetEventType;
 import com.enet.ENetEventHandler;
+import com.enet.ENetPacketFlags;
 import com.enet.ENetPeer;
 
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServerExample {
     private ENetConnection server;
     private final Map<ENetPeer, String> connectedClients = new ConcurrentHashMap<>();
+    private final Map<ENetPeer, Boolean> welcomeSent = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         ServerExample server = new ServerExample();
@@ -70,30 +72,45 @@ public class ServerExample {
         connectedClients.put(peer, clientInfo);
         System.out.println("Client connected: " + clientInfo + " (Total clients: " + connectedClients.size() + ")");
         
-        // Send welcome message
-        String welcome = "Welcome to the server! You are connected.";
-        server.send(peer, (byte) 0, welcome.getBytes());
-        server.flush();
+        // Note: Not sending welcome message automatically to avoid Godot _process_sys() errors
+        // Welcome message will be sent as echo response when client sends first message
+        // If you need a welcome message, send it after client's first packet in onReceive()
     }
 
     @ENetEventHandler(ENetEventType.DISCONNECT)
     public void onDisconnect(ENetEvent event) {
         ENetPeer peer = event.getPeer();
         String clientInfo = connectedClients.remove(peer);
+        welcomeSent.remove(peer);
         System.out.println("Client disconnected: " + clientInfo + " (Total clients: " + connectedClients.size() + ")");
     }
 
     @ENetEventHandler(ENetEventType.RECEIVE)
     public void onReceive(ENetEvent event) {
         ENetPeer peer = event.getPeer();
-        String message = event.getPacket().getDataAsString();
+        byte channelID = event.getChannelID();
         String clientInfo = connectedClients.getOrDefault(peer, peer.getAddress().toString());
-        System.out.println("[" + clientInfo + "] " + message);
         
-        // Echo back to the sender
+        String message = event.getPacket().getDataAsString();
+        System.out.println("[" + clientInfo + "] " + message + " (channel: " + channelID + ")");
+
+        // Send welcome message on first received packet (after Godot connection is fully established)
+        if (!welcomeSent.getOrDefault(peer, false)) {
+            String welcome = "Welcome to the server! You are connected.";
+            byte[] welcomeData = welcome.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            // Send plain data on channel 0 - Godot now uses direct ENet connection
+            server.send(peer, (byte) 0, welcomeData, ENetPacketFlags.RELIABLE);
+            welcomeSent.put(peer, true);
+            server.flush();
+            System.out.println("Sent welcome message to " + clientInfo + " (channel 0, size: " + welcomeData.length + ")");
+        }
+
+        // Send plain responses on channel 0 - no special formatting needed
         String response = "Echo: " + message;
-        server.send(peer, event.getChannelID(), response.getBytes());
+        byte[] data = response.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        int result = server.send(peer, (byte) 0, data, ENetPacketFlags.RELIABLE);
         server.flush();
+        System.out.println("Echo sent, result: " + result + ", data length: " + data.length + ", channel: 0");
     }
     
     public void broadcastMessage(String message) {
@@ -101,15 +118,20 @@ public class ServerExample {
             System.out.println("No clients connected to send message to.");
             return;
         }
-        
+
         System.out.println("Broadcasting to " + connectedClients.size() + " client(s): " + message);
-        server.broadcast((byte) 0, message.getBytes());
+        // Send plain data on channel 0 - Godot now uses direct ENet connection
+        byte[] data = message.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        server.broadcast((byte) 0, data, ENetPacketFlags.RELIABLE);
         server.flush();
+        System.out.println("Broadcast sent, data length: " + data.length);
     }
     
     public void sendToClient(ENetPeer peer, String message) {
         if (connectedClients.containsKey(peer)) {
-            server.send(peer, (byte) 0, message.getBytes());
+            // Send plain data on channel 0 - Godot now uses direct ENet connection
+            byte[] data = message.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            server.send(peer, (byte) 0, data, ENetPacketFlags.RELIABLE);
             server.flush();
         } else {
             System.out.println("Client not found or disconnected.");

@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3 uid="uid://bf4vootp23vgo"]
+
+[ext_resource type="Script" uid="uid://df2ta6slaojfb" path="res://node.gd" id="1_sy5k4"]
+
+[node name="Node" type="Node"]
+script = ExtResource("1_sy5k4")
+
+[node name="Node2D" type="Node2D" parent="."]
+
+[node name="Panel" type="Panel" parent="Node2D"]
+offset_right = 274.0
+offset_bottom = 247.0
+
+[node name="Button" type="Button" parent="Node2D/Panel"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 90.0
+offset_right = 155.0
+offset_bottom = 131.0
+text = "Send Message"
+
+[connection signal="pressed" from="Node2D/Panel/Button" to="." method="_on_send_message_button_pressed"]

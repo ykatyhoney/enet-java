@@ -121,7 +121,7 @@ Java_com_enet_ENetConnection_nativeCreateHost(JNIEnv *env, jclass clazz,
     if (host != NULL) {
         const char *hostStr = (*env)->GetStringUTFChars(env, host, NULL);
         if (hostStr != NULL) {
-            if (strcmp(hostStr, "0.0.0.0") == 0 || strcmp(hostStr, "") == 0) {
+            if (strcmp(hostStr, "0.0.0.0") == 0 || strcmp(hostStr, "::") == 0 || strcmp(hostStr, "") == 0) {
                 address.host = in6addr_any;
             } else {
                 if (enet_address_set_host(&address, hostStr) < 0) {
@@ -152,7 +152,7 @@ Java_com_enet_ENetConnection_nativeCreateHostBound(JNIEnv *env, jclass clazz,
     
     if (host != NULL && port != 0) {
         const char *hostStr = (*env)->GetStringUTFChars(env, host, NULL);
-        if (strcmp(hostStr, "0.0.0.0") == 0 || strcmp(hostStr, "") == 0) {
+        if (strcmp(hostStr, "0.0.0.0") == 0 || strcmp(hostStr, "::") == 0 || strcmp(hostStr, "") == 0) {
             address.host = in6addr_any;
         } else {
             enet_address_set_host(&address, hostStr);
